@@ -8,8 +8,7 @@ variables:
   DOCKER_IMAGE: $CI_REGISTRY_IMAGE
 
 stages:
-  - build
-  - test
+  - build-test
   - docker
   - deploy
   - release
@@ -19,15 +18,13 @@ cache:
     - .m2/repository
     - target/
 
-build:
-  stage: build
+build-and-test:
+  stage: build-test
   script:
-    - mvn -B clean package -DskipTests
-
-test:
-  stage: test
-  script:
-    - mvn -B test
+    - mvn -B clean verify
+  artifacts:
+    paths:
+      - target/*.jar
 
 docker-build:
   stage: docker
@@ -38,6 +35,8 @@ docker-build:
   only:
     - main
     - tags
+  dependencies:
+    - build-and-test
 
 deploy-heroku:
   stage: deploy
