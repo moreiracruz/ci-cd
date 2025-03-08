@@ -39,8 +39,8 @@ jobs:
           context: .
           push: true
           tags: |
-            pawloandre/ci-cd:${{ steps.version.outputs.version }}
-            pawloandre/ci-cd:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
 
   release:
     runs-on: ubuntu-latest
