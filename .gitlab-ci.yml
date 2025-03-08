@@ -1,0 +1,61 @@
+image: maven:3.8.6-openjdk-17
+
+services:
+  - docker:dind
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=./.m2/repository"
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE
+
+stages:
+  - build
+  - test
+  - docker
+  - deploy
+  - release
+
+cache:
+  paths:
+    - .m2/repository
+    - target/
+
+build:
+  stage: build
+  script:
+    - mvn -B clean package -DskipTests
+
+test:
+  stage: test
+  script:
+    - mvn -B test
+
+docker-build:
+  stage: docker
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $DOCKER_IMAGE:latest .
+    - docker push $DOCKER_IMAGE:latest
+  only:
+    - main
+    - tags
+
+deploy-heroku:
+  stage: deploy
+  script:
+    - apt-get update && apt-get install -y curl
+    - curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+    - heroku container:login --api-key $HEROKU_API_KEY
+    - heroku container:push web --app $HEROKU_APP_NAME
+    - heroku container:release web --app $HEROKU_APP_NAME
+  only:
+    - main
+    - tags
+
+maven-release:
+  stage: release
+  script:
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+    - mvn -B release:prepare release:perform -Darguments="-DskipTests"
+  only:
+    - tags

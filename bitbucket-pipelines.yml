@@ -1,0 +1,40 @@
+image: maven:3.8.6-openjdk-17
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build and Test
+          caches:
+            - maven
+          script:
+            - mvn -B clean verify
+
+      - step:
+          name: Build Docker Image
+          services:
+            - docker
+          script:
+            - docker build -t $DOCKER_REGISTRY/$DOCKER_REPOSITORY:latest .
+            - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+            - docker push $DOCKER_REGISTRY/$DOCKER_REPOSITORY:latest
+
+      - step:
+          name: Deploy to Heroku
+          script:
+            - apt-get update && apt-get install -y curl
+            - curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+            - heroku container:login --api-key $HEROKU_API_KEY
+            - heroku container:push web --app $HEROKU_APP_NAME
+            - heroku container:release web --app $HEROKU_APP_NAME
+
+  tags:
+    'v*':
+      - step:
+          name: Maven Release
+          script:
+            - mvn -B release:prepare release:perform -Darguments="-DskipTests"
+          services:
+            - docker
+          caches:
+            - maven
