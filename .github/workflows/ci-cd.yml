@@ -71,26 +71,26 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  deploy-heroku:
-    needs: docker
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Heroku CLI
-        run: |
-          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-
-      - name: Login to Heroku Container Registry
-        run: |
-          heroku container:login --api-key ${{ secrets.HEROKU_API_KEY }}
-
-      - name: Push to Heroku
-        run: |
-          heroku container:push web --app ${{ secrets.HEROKU_APP_NAME }}
-          heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+#  deploy-heroku:
+#    needs: docker
+#    runs-on: ubuntu-latest
+#    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Install Heroku CLI
+#        run: |
+#          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+#
+#      - name: Login to Heroku Container Registry
+#        run: |
+#          heroku container:login --api-key ${{ secrets.HEROKU_API_KEY }}
+#
+#      - name: Push to Heroku
+#        run: |
+#          heroku container:push web --app ${{ secrets.HEROKU_APP_NAME }}
+#          heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
 
   release:
     needs: build-test
